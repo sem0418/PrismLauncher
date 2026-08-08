@@ -141,6 +141,8 @@ set(NET_SOURCES
     net/ApiHeaderProxy.h
     net/ApiDownload.h
     net/ApiDownload.cpp
+    net/DownloadSourcePolicy.h
+    net/DownloadSourcePolicy.cpp
     net/ApiUpload.cpp
     net/ApiUpload.h
     net/NetRequest.cpp
