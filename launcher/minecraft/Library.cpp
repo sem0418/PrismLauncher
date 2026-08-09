@@ -41,6 +41,7 @@
 #include <net/ApiDownload.h>
 #include <net/ChecksumValidator.h>
 #include "net/DownloadSourcePolicy.h"
+#include "Application.h"
 
 /**
  * @brief Collect applicable files for the library.
@@ -147,7 +148,7 @@ QList<Net::NetRequest::Ptr> Library::getDownloads(const RuntimeContext& runtimeC
         options |= Net::Download::Option::MakeEternal;
 
         auto finalUrl = QUrl(url);
-        if (convertUrl) {
+        if (convertUrl && APPLICATION_DYN) {
             DownloadSourcePolicy::ResourceRequest req;
             req.kind = DownloadSourcePolicy::ResourceKind::MinecraftLibrary;
             req.originalUrl = finalUrl;

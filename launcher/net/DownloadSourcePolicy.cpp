@@ -193,6 +193,9 @@ QUrl urlFor(const ResourceRequest& request, Mode mode, const CustomSources& cust
 
 Mode currentMode()
 {
+    if (!APPLICATION_DYN)
+        return Mode::Mirror;
+
     auto s = APPLICATION->settings();
     auto modeStr = s->get("DownloadSourceMode").toString();
     if (modeStr == QStringLiteral("Official"))
@@ -204,6 +207,9 @@ Mode currentMode()
 
 CustomSources currentCustomSources()
 {
+    if (!APPLICATION_DYN)
+        return {};
+
     auto s = APPLICATION->settings();
     CustomSources custom;
     custom.minecraft.baseUrl = s->get("CustomMinecraftBaseUrl").toString();
