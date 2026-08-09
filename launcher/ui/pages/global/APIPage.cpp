@@ -87,6 +87,9 @@ APIPage::APIPage(QWidget* parent) : QWidget(parent), ui(new Ui::APIPage)
 
     loadSettings();
 
+    updateDownloadSourceMode();
+    connect(ui->downloadSourceModeComboBox, currentIndexChangedSignal, this, &APIPage::updateDownloadSourceMode);
+
     resetBaseURLNote();
     connect(ui->pasteTypeComboBox, currentIndexChangedSignal, this, &APIPage::updateBaseURLNote);
     connect(ui->baseURLEntry, &QLineEdit::textEdited, this, &APIPage::resetBaseURLNote);
@@ -117,6 +120,11 @@ void APIPage::updateBaseURLPlaceholder(int index)
     int pasteType = ui->pasteTypeComboBox->itemData(index).toInt();
     QString pasteDefaultURL = PasteUpload::PasteTypes.at(pasteType).defaultBase;
     ui->baseURLEntry->setPlaceholderText(pasteDefaultURL);
+}
+
+void APIPage::updateDownloadSourceMode()
+{
+    ui->customSourceWidget->setVisible(ui->downloadSourceModeComboBox->currentIndex() == 2);
 }
 
 void APIPage::loadSettings()
@@ -155,6 +163,22 @@ void APIPage::loadSettings()
     QString customUserAgent = s->get("UserAgentOverride").toString();
     ui->userAgentLineEdit->setText(customUserAgent);
     ui->technicClientID->setText(s->get("TechnicClientID").toString());
+
+    auto modeStr = s->get("DownloadSourceMode").toString();
+    if (modeStr == QStringLiteral("Official"))
+        ui->downloadSourceModeComboBox->setCurrentIndex(1);
+    else if (modeStr == QStringLiteral("Custom"))
+        ui->downloadSourceModeComboBox->setCurrentIndex(2);
+    else
+        ui->downloadSourceModeComboBox->setCurrentIndex(0);
+
+    ui->customMcBaseUrl->setText(s->get("CustomMinecraftBaseUrl").toString());
+    auto mcFmt = s->get("CustomMinecraftFormat").toString();
+    ui->customMcFormatComboBox->setCurrentIndex(mcFmt == QStringLiteral("BMCLAPI") ? 1 : 0);
+
+    ui->customModsBaseUrl->setText(s->get("CustomModsBaseUrl").toString());
+    auto modFmt = s->get("CustomModsFormat").toString();
+    ui->customModsFormatComboBox->setCurrentIndex(modFmt == QStringLiteral("MCIM") ? 1 : 0);
 }
 
 void APIPage::applySettings()
@@ -204,6 +228,20 @@ void APIPage::applySettings()
     s->set("ModrinthToken", modrinthToken);
     s->set("UserAgentOverride", ui->userAgentLineEdit->text());
     s->set("TechnicClientID", ui->technicClientID->text());
+
+    auto modeIdx = ui->downloadSourceModeComboBox->currentIndex();
+    if (modeIdx == 1)
+        s->set("DownloadSourceMode", QStringLiteral("Official"));
+    else if (modeIdx == 2)
+        s->set("DownloadSourceMode", QStringLiteral("Custom"));
+    else
+        s->set("DownloadSourceMode", QStringLiteral("Mirror"));
+
+    s->set("CustomMinecraftBaseUrl", ui->customMcBaseUrl->text());
+    s->set("CustomMinecraftFormat", ui->customMcFormatComboBox->currentIndex() == 1 ? QStringLiteral("BMCLAPI") : QStringLiteral("Mojang"));
+
+    s->set("CustomModsBaseUrl", ui->customModsBaseUrl->text());
+    s->set("CustomModsFormat", ui->customModsFormatComboBox->currentIndex() == 1 ? QStringLiteral("MCIM") : QStringLiteral("Official"));
 }
 
 bool APIPage::apply()

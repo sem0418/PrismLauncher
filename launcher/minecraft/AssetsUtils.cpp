@@ -32,7 +32,6 @@
  *      See the License for the specific language governing permissions and
  *      limitations under the License.
  */
-
 #include <QCryptographicHash>
 #include <QDebug>
 #include <QDir>
@@ -42,17 +41,16 @@
 #include <QJsonObject>
 #include <QJsonParseError>
 #include <QVariant>
-
 #include "AssetsUtils.h"
 #include "BuildConfig.h"
 #include "FileSystem.h"
 #include "net/ApiDownload.h"
 #include "net/ChecksumValidator.h"
 #include "net/Download.h"
-
 #include "Application.h"
 #include "net/NetRequest.h"
 #include "update/AssetUpdateTask.h"
+#include "net/DownloadSourcePolicy.h"
 
 namespace {
 QSet<QString> collectPathsFromDir(QString dirPath)
@@ -282,7 +280,13 @@ Net::NetRequest::Ptr AssetObject::getDownloadAction()
 {
     QFileInfo objectFile(getLocalPath());
     if ((!objectFile.isFile()) || (objectFile.size() != size)) {
-        auto objectDL = Net::ApiDownload::makeFile(getUrl(), objectFile.filePath());
+        auto originalUrl = getUrl();
+        DownloadSourcePolicy::ResourceRequest req;
+        req.kind = DownloadSourcePolicy::ResourceKind::MinecraftAssetObject;
+        req.originalUrl = originalUrl;
+        req.assetHash = hash;
+        auto finalUrl = DownloadSourcePolicy::urlFor(req,DownloadSourcePolicy::currentMode(),DownloadSourcePolicy::currentCustomSources());
+        auto objectDL = Net::ApiDownload::makeFile(finalUrl, objectFile.filePath());
         if (hash.size()) {
             objectDL->addValidator(new Net::ChecksumValidator(QCryptographicHash::Sha1, hash));
         }

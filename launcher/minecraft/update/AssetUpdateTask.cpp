@@ -10,6 +10,7 @@
 #include "Application.h"
 
 #include "net/ApiDownload.h"
+#include "net/DownloadSourcePolicy.h"
 
 AssetUpdateTask::AssetUpdateTask(MinecraftInstance* inst)
 {
@@ -31,7 +32,14 @@ void AssetUpdateTask::executeTask()
     entry->setStale(true);
     auto hexSha1 = assets->sha1.toLatin1();
     qDebug() << "Asset index SHA1:" << hexSha1;
-    auto dl = Net::ApiDownload::makeCached(indexUrl, entry);
+
+    DownloadSourcePolicy::ResourceRequest req;
+    req.kind = DownloadSourcePolicy::ResourceKind::MinecraftAssetIndex;
+    req.originalUrl = indexUrl;
+    req.versionId = profile->getComponentVersion("net.minecraft");
+    auto finalUrl = DownloadSourcePolicy::urlFor(req, DownloadSourcePolicy::currentMode(), DownloadSourcePolicy::currentCustomSources());
+
+    auto dl = Net::ApiDownload::makeCached(finalUrl, entry);
     dl->addValidator(new Net::ChecksumValidator(QCryptographicHash::Sha1, assets->sha1));
     job->addNetAction(dl);
 

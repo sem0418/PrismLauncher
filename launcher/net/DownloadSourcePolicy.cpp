@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
-
 #include "DownloadSourcePolicy.h"
-
+#include "Application.h"
+#include "settings/SettingsObject.h"
 namespace DownloadSourcePolicy
 {
 namespace
@@ -14,19 +14,19 @@ QUrl urlFromBase(QUrl baseUrl, QString relativePath, const QUrl& originalUrl = {
 {
     QString path = baseUrl.path();
 
-if (!path.endsWith('/')) {
+    if (!path.endsWith('/')) {
         path += '/';
     }
 
-relativePath.remove(0, relativePath.startsWith('/') ? 1 : 0);
+    relativePath.remove(0, relativePath.startsWith('/') ? 1 : 0);
     baseUrl.setPath(path + relativePath);
 
-if (!originalUrl.isEmpty()) {
+    if (!originalUrl.isEmpty()) {
         baseUrl.setQuery(originalUrl.query());
         baseUrl.setFragment(originalUrl.fragment());
     }
 
-return baseUrl;
+    return baseUrl;
 }
 
 QUrl minecraftBmclUrl(const ResourceRequest& request, const QUrl& baseUrl)
@@ -35,38 +35,38 @@ QUrl minecraftBmclUrl(const ResourceRequest& request, const QUrl& baseUrl)
     case ResourceKind::MinecraftVersionManifest:
         return urlFromBase(baseUrl, QStringLiteral("mc/game/version_manifest.json"));
 
-case ResourceKind::MinecraftVersionJson:
+    case ResourceKind::MinecraftVersionJson:
         return urlFromBase(
             baseUrl,
             QStringLiteral("version/%1/json").arg(request.versionId)
         );
 
-case ResourceKind::MinecraftClient:
+    case ResourceKind::MinecraftClient:
         return urlFromBase(
             baseUrl,
             QStringLiteral("version/%1/client").arg(request.versionId)
         );
 
-case ResourceKind::MinecraftAssetIndex:
+    case ResourceKind::MinecraftAssetIndex:
         return urlFromBase(
             baseUrl,
             QStringLiteral("version/%1/asset_index").arg(request.versionId)
         );
 
-case ResourceKind::MinecraftAssetObject:
+    case ResourceKind::MinecraftAssetObject:
         return urlFromBase(
             baseUrl,
             QStringLiteral("assets/%1/%2")
                 .arg(request.assetHash.left(2), request.assetHash)
         );
 
-case ResourceKind::MinecraftLibrary:
+    case ResourceKind::MinecraftLibrary:
         return urlFromBase(
             baseUrl,
             QStringLiteral("maven/%1").arg(request.relativePath)
         );
 
-default:
+    default:
         return request.originalUrl;
     }
 }
@@ -81,28 +81,28 @@ QUrl modMcimUrl(const ResourceRequest& request, const QUrl& baseUrl)
             request.originalUrl
         );
 
-case ResourceKind::ModrinthFile:
+    case ResourceKind::ModrinthFile:
         return urlFromBase(
             baseUrl,
             request.originalUrl.path(),
             request.originalUrl
         );
 
-case ResourceKind::CurseForgeApi:
+    case ResourceKind::CurseForgeApi:
         return urlFromBase(
             baseUrl,
             QStringLiteral("curseforge%1").arg(request.originalUrl.path()),
             request.originalUrl
         );
 
-case ResourceKind::CurseForgeFile:
+    case ResourceKind::CurseForgeFile:
         return urlFromBase(
             baseUrl,
             request.originalUrl.path(),
             request.originalUrl
         );
 
-default:
+    default:
         return request.originalUrl;
     }
 }
@@ -118,7 +118,7 @@ bool isMinecraftResource(ResourceKind kind)
     case ResourceKind::MinecraftLibrary:
         return true;
 
-default:
+    default:
         return false;
     }
 }
@@ -132,7 +132,7 @@ bool isModResource(ResourceKind kind)
     case ResourceKind::CurseForgeFile:
         return true;
 
-default:
+    default:
         return false;
     }
 }
@@ -145,47 +145,81 @@ QUrl urlFor(const ResourceRequest& request, Mode mode, const CustomSources& cust
         return request.originalUrl;
     }
 
-switch (mode) {
+    switch (mode) {
     case Mode::Official:
         return request.originalUrl;
 
-case Mode::Mirror:
+    case Mode::Mirror:
         if (isMinecraftResource(request.kind)) {
             return minecraftBmclUrl(request, bmclApiBase);
         }
 
-if (isModResource(request.kind)) {
+        if (isModResource(request.kind)) {
             return modMcimUrl(request, mcimBase);
         }
 
-return request.originalUrl;
+        return request.originalUrl;
 
-case Mode::Custom:
+    case Mode::Custom:
         if (isMinecraftResource(request.kind)) {
             if (customSources.minecraft.format == MinecraftSourceFormat::BMCLAPI) {
                 return minecraftBmclUrl(request, customSources.minecraft.baseUrl);
             }
 
-return urlFromBase(
+            return urlFromBase(
                 customSources.minecraft.baseUrl,
                 request.originalUrl.path(),
                 request.originalUrl
             );
         }
 
-if (isModResource(request.kind)) {
+        if (isModResource(request.kind)) {
             if (customSources.mods.format == ModSourceFormat::MCIM) {
                 return modMcimUrl(request, customSources.mods.baseUrl);
             }
 
-return urlFromBase(
+            return urlFromBase(
                 customSources.mods.baseUrl,
                 request.originalUrl.path(),
                 request.originalUrl
             );
         }
 
-return request.originalUrl;
+        return request.originalUrl;
     }
+
+    return request.originalUrl;
+}
+
+Mode currentMode()
+{
+    auto s = APPLICATION->settings();
+    auto modeStr = s->get("DownloadSourceMode").toString();
+    if (modeStr == QStringLiteral("Official"))
+        return Mode::Official;
+    if (modeStr == QStringLiteral("Custom"))
+        return Mode::Custom;
+    return Mode::Mirror;
+}
+
+CustomSources currentCustomSources()
+{
+    auto s = APPLICATION->settings();
+    CustomSources custom;
+    custom.minecraft.baseUrl = s->get("CustomMinecraftBaseUrl").toString();
+    auto mcFormat = s->get("CustomMinecraftFormat").toString();
+    if (mcFormat == QStringLiteral("BMCLAPI"))
+        custom.minecraft.format = MinecraftSourceFormat::BMCLAPI;
+    else
+        custom.minecraft.format = MinecraftSourceFormat::Mojang;
+
+    custom.mods.baseUrl = s->get("CustomModsBaseUrl").toString();
+    auto modFormat = s->get("CustomModsFormat").toString();
+    if (modFormat == QStringLiteral("MCIM"))
+        custom.mods.format = ModSourceFormat::MCIM;
+    else
+        custom.mods.format = ModSourceFormat::Official;
+    return custom;
+}
 
 } // namespace DownloadSourcePolicy

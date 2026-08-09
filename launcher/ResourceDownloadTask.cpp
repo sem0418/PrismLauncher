@@ -33,6 +33,7 @@
 #include "modplatform/helpers/HashUtils.h"
 #include "net/ApiDownload.h"
 #include "net/ChecksumValidator.h"
+#include "net/DownloadSourcePolicy.h"
 
 namespace {
 Net::ModrinthDownloadMeta createModrinthMeta(MinecraftInstance* instance, QString reason, QString dependentOn)
@@ -69,8 +70,16 @@ ResourceDownloadTask::ResourceDownloadTask(ModPlatform::IndexedPack::Ptr pack,
     m_filesNetJob.reset(new NetJob(tr("Resource download"), APPLICATION->network()));
     m_filesNetJob->setStatus(tr("Downloading resource:\n%1").arg(m_pack_version.downloadUrl));
 
+    DownloadSourcePolicy::ResourceRequest req;
+    req.originalUrl = m_pack_version.downloadUrl;
+    if (m_pack->provider == ModPlatform::ResourceProvider::FLAME)
+        req.kind = DownloadSourcePolicy::ResourceKind::CurseForgeFile;
+    else
+        req.kind = DownloadSourcePolicy::ResourceKind::ModrinthFile;
+    auto finalUrl = DownloadSourcePolicy::urlFor(req, DownloadSourcePolicy::currentMode(), DownloadSourcePolicy::currentCustomSources());
+
     auto action = Net::ApiDownload::makeFile(
-        m_pack_version.downloadUrl, m_pack_model->dir().absoluteFilePath(getFilename()), Net::Download::Option::NoOptions,
+        finalUrl, m_pack_model->dir().absoluteFilePath(getFilename()), Net::Download::Option::NoOptions,
         createModrinthMeta(m_pack_model->instance(), std::move(downloadReason), std::move(dependentOn)));
     if (!m_pack_version.hash_type.isEmpty() && !m_pack_version.hash.isEmpty()) {
         switch (Hashing::algorithmFromString(m_pack_version.hash_type)) {

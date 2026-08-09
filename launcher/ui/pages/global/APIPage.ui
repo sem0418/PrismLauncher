@@ -440,6 +440,129 @@
         </widget>
        </item>
        <item>
+        <widget class="QGroupBox" name="groupBox_downloadSource">
+         <property name="title">
+          <string>下载源</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_downloadSource">
+          <item>
+           <widget class="QLabel" name="downloadSourceModeLabel">
+            <property name="text">
+             <string>下载源模式</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="downloadSourceModeComboBox">
+            <item>
+             <property name="text">
+              <string>镜像</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>官方</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>自定义</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item>
+           <widget class="QWidget" name="customSourceWidget">
+            <layout class="QVBoxLayout" name="verticalLayout_customSource">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>6</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="customMcBaseLabel">
+               <property name="text">
+                <string>Minecraft 自定义源地址</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="customMcBaseUrl">
+               <property name="placeholderText">
+                <string>例如：https://bmclapi2.bangbang93.com</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="customMcFormatLabel">
+               <property name="text">
+                <string>Minecraft 源格式</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="customMcFormatComboBox">
+               <item>
+                <property name="text">
+                 <string>Mojang</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>BMCLAPI</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="customModsBaseLabel">
+               <property name="text">
+                <string>模组源自定义地址</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="customModsBaseUrl">
+               <property name="placeholderText">
+                <string>例如：https://mod.mcimirror.top</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="customModsFormatLabel">
+               <property name="text">
+                <string>模组源格式</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="customModsFormatComboBox">
+               <item>
+                <property name="text">
+                 <string>Official</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>MCIM</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
         <spacer name="verticalSpacer_2">
          <property name="orientation">
           <enum>Qt::Vertical</enum>

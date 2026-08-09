@@ -76,5 +76,7 @@ QUrl urlFor(
     Mode mode,
     const CustomSources& customSources
 );
+Mode currentMode();
+CustomSources currentCustomSources();
 
 } // namespace DownloadSourcePolicy

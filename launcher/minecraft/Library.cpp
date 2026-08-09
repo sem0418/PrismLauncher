@@ -36,11 +36,11 @@
 #include "Library.h"
 #include "MinecraftInstance.h"
 #include "net/NetRequest.h"
-
 #include <BuildConfig.h>
 #include <FileSystem.h>
 #include <net/ApiDownload.h>
 #include <net/ChecksumValidator.h>
+#include "net/DownloadSourcePolicy.h"
 
 /**
  * @brief Collect applicable files for the library.

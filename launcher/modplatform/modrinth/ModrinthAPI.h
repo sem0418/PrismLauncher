@@ -8,6 +8,7 @@
 #include "modplatform/ModIndex.h"
 #include "modplatform/ResourceAPI.h"
 #include "modplatform/modrinth/ModrinthPackIndex.h"
+#include "net/DownloadSourcePolicy.h"
 
 #include <QDebug>
 #include <utility>
@@ -182,17 +183,26 @@ class ModrinthAPI final : public ResourceAPI {
         }
         get_arguments.append(QString("facets=%1").arg(createFacets(args)));
 
-        return BuildConfig.MODRINTH_PROD_URL + "/search?" + get_arguments.join('&');
+        auto url = BuildConfig.MODRINTH_PROD_URL + "/search?" + get_arguments.join('&');
+        DownloadSourcePolicy::ResourceRequest req;
+        req.originalUrl = QUrl(url);
+        req.kind = DownloadSourcePolicy::ResourceKind::ModrinthApi;
+        return DownloadSourcePolicy::urlFor(req, DownloadSourcePolicy::currentMode(), DownloadSourcePolicy::currentCustomSources()).toString();
     };
 
     auto getInfoURL(const QString& id) const -> std::optional<QString> override
     {
-        return BuildConfig.MODRINTH_PROD_URL + "/project/" + id;
+        DownloadSourcePolicy::ResourceRequest req{ DownloadSourcePolicy::ResourceKind::ModrinthApi, QUrl(BuildConfig.MODRINTH_PROD_URL + "/project/" + id) };
+        return DownloadSourcePolicy::urlFor(req, DownloadSourcePolicy::currentMode(), DownloadSourcePolicy::currentCustomSources()).toString();
     };
 
     static auto getMultipleModInfoURL(const QStringList& ids) -> QString
     {
-        return BuildConfig.MODRINTH_PROD_URL + QString("/projects?ids=[\"%1\"]").arg(ids.join("\",\""));
+        auto url = BuildConfig.MODRINTH_PROD_URL + QString("/projects?ids=[\"%1\"]").arg(ids.join("\",\""));
+        DownloadSourcePolicy::ResourceRequest req;
+        req.originalUrl = QUrl(url);
+        req.kind = DownloadSourcePolicy::ResourceKind::ModrinthApi;
+        return DownloadSourcePolicy::urlFor(req, DownloadSourcePolicy::currentMode(), DownloadSourcePolicy::currentCustomSources()).toString();
     };
 
     auto getVersionsURL(const VersionSearchArgs& args) const -> std::optional<QString> override
@@ -206,8 +216,12 @@ class ModrinthAPI final : public ResourceAPI {
         }
         get_arguments.append(QString("include_changelog=%1").arg(args.includeChangelog ? "true" : "false"));
 
-        return QString("%1/project/%2/version%3%4")
+        auto url = QString("%1/project/%2/version%3%4")
             .arg(BuildConfig.MODRINTH_PROD_URL, args.pack->addonId.toString(), get_arguments.isEmpty() ? "" : "?", get_arguments.join('&'));
+        DownloadSourcePolicy::ResourceRequest req;
+        req.kind = DownloadSourcePolicy::ResourceKind::ModrinthApi;
+        req.originalUrl = QUrl(url);
+        return DownloadSourcePolicy::urlFor(req, DownloadSourcePolicy::currentMode(), DownloadSourcePolicy::currentCustomSources()).toString();
     };
 
     QString getGameVersionsArray(const std::vector<Version>& mcVersions) const
@@ -229,7 +243,7 @@ class ModrinthAPI final : public ResourceAPI {
 
     std::optional<QString> getDependencyURL(const DependencySearchArgs& args) const override
     {
-        return args.dependency.version.length() != 0
+        auto url = args.dependency.version.length() != 0
                    ? QString("%1/version/%2").arg(BuildConfig.MODRINTH_PROD_URL, args.dependency.version)
                    : QString(R"(%1/project/%2/version?game_versions=["%3"]&loaders=["%4"]&include_changelog=%5)")
                          .arg(BuildConfig.MODRINTH_PROD_URL)
@@ -237,6 +251,10 @@ class ModrinthAPI final : public ResourceAPI {
                          .arg(mapMCVersionToModrinth(args.mcVersion))
                          .arg(getModLoaderStrings(args.loader).join("\",\""))
                          .arg(args.includeChangelog ? "true" : "false");
+        DownloadSourcePolicy::ResourceRequest req;
+        req.originalUrl = QUrl(url);
+        req.kind = DownloadSourcePolicy::ResourceKind::ModrinthApi;
+        return DownloadSourcePolicy::urlFor(req, DownloadSourcePolicy::currentMode(), DownloadSourcePolicy::currentCustomSources()).toString();
     };
 
     QJsonArray documentToArray(QJsonDocument& obj) const override { return obj.object().value("hits").toArray(); }

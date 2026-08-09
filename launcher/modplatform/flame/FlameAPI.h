@@ -14,6 +14,7 @@
 #include "modplatform/ModIndex.h"
 #include "modplatform/ResourceAPI.h"
 #include "modplatform/flame/FlameModIndex.h"
+#include "net/DownloadSourcePolicy.h"
 
 class FlameAPI final : public ResourceAPI {
    public:
@@ -140,7 +141,13 @@ class FlameAPI final : public ResourceAPI {
             get_arguments.append(QString("gameVersion=%1").arg(args.versions.value().front().toString()));
         }
 
-        return BuildConfig.FLAME_BASE_URL + "/mods/search?gameId=432&" + get_arguments.join('&');
+        auto url = BuildConfig.FLAME_BASE_URL + "/mods/search?gameId=432&" + get_arguments.join('&');
+        {
+            DownloadSourcePolicy::ResourceRequest req;
+            req.originalUrl = QUrl(url);
+            req.kind = DownloadSourcePolicy::ResourceKind::CurseForgeApi;
+            return DownloadSourcePolicy::urlFor(req, DownloadSourcePolicy::currentMode(), DownloadSourcePolicy::currentCustomSources()).toString();
+        }
     }
 
     std::optional<QString> getVersionsURL(const VersionSearchArgs& args) const override
@@ -157,7 +164,10 @@ class FlameAPI final : public ResourceAPI {
             int mappedModLoader = getMappedModLoader(static_cast<ModPlatform::ModLoaderType>(static_cast<int>(args.loaders.value())));
             url += QString("&modLoaderType=%1").arg(mappedModLoader);
         }
-        return url;
+        DownloadSourcePolicy::ResourceRequest req;
+        req.kind = DownloadSourcePolicy::ResourceKind::CurseForgeApi;
+        req.originalUrl = QUrl(url);
+        return DownloadSourcePolicy::urlFor(req, DownloadSourcePolicy::currentMode(), DownloadSourcePolicy::currentCustomSources()).toString();
     }
 
     QJsonArray documentToArray(QJsonDocument& obj) const override { return obj.object()["data"].toArray(); }
@@ -180,7 +190,10 @@ class FlameAPI final : public ResourceAPI {
     void loadExtraPackInfo(ModPlatform::IndexedPack& m, [[maybe_unused]] QJsonObject& /*unused*/) const override { FlameMod::loadBody(m); }
 
    private:
-    std::optional<QString> getInfoURL(const QString& id) const override { return QString(BuildConfig.FLAME_BASE_URL + "/mods/%1").arg(id); }
+    std::optional<QString> getInfoURL(const QString& id) const override {
+        DownloadSourcePolicy::ResourceRequest req{ DownloadSourcePolicy::ResourceKind::CurseForgeApi, QUrl(QString(BuildConfig.FLAME_BASE_URL + "/mods/%1").arg(id)) };
+        return DownloadSourcePolicy::urlFor(req, DownloadSourcePolicy::currentMode(), DownloadSourcePolicy::currentCustomSources()).toString();
+    }
     std::optional<QString> getDependencyURL(const DependencySearchArgs& args) const override
     {
         auto addonId = args.dependency.addonId.toString();
@@ -190,6 +203,11 @@ class FlameAPI final : public ResourceAPI {
             int mappedModLoader = getMappedModLoader(static_cast<ModPlatform::ModLoaderType>(static_cast<int>(args.loader)));
             url += QString("&modLoaderType=%1").arg(mappedModLoader);
         }
-        return url;
+        {
+            DownloadSourcePolicy::ResourceRequest req;
+            req.kind = DownloadSourcePolicy::ResourceKind::CurseForgeApi;
+            req.originalUrl = QUrl(url);
+            return DownloadSourcePolicy::urlFor(req, DownloadSourcePolicy::currentMode(), DownloadSourcePolicy::currentCustomSources()).toString();
+        }
     }
 };
