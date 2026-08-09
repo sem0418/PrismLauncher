@@ -128,7 +128,7 @@ QList<Net::NetRequest::Ptr> Library::getDownloads(const RuntimeContext& runtimeC
     };
 
     // Lambda function to add a download request
-    auto add_download = [this, local, check_local_file, cache, stale, &out](QString storage, QString url, QString sha1) {
+    auto add_download = [this, local, check_local_file, cache, stale, &out](QString storage, QString url, QString sha1, bool convertUrl) {
         if (local) {
             return check_local_file(storage);
         }
@@ -146,13 +146,22 @@ QList<Net::NetRequest::Ptr> Library::getDownloads(const RuntimeContext& runtimeC
         // Don't add a time limit for the libraries cache entry validity
         options |= Net::Download::Option::MakeEternal;
 
+        auto finalUrl = QUrl(url);
+        if (convertUrl) {
+            DownloadSourcePolicy::ResourceRequest req;
+            req.kind = DownloadSourcePolicy::ResourceKind::MinecraftLibrary;
+            req.originalUrl = finalUrl;
+            req.relativePath = storage;
+            finalUrl = DownloadSourcePolicy::urlFor(req, DownloadSourcePolicy::currentMode(), DownloadSourcePolicy::currentCustomSources());
+        }
+
         if (sha1.size()) {
-            auto dl = Net::ApiDownload::makeCached(url, entry, options);
+            auto dl = Net::ApiDownload::makeCached(finalUrl, entry, options);
             dl->addValidator(new Net::ChecksumValidator(QCryptographicHash::Sha1, sha1));
             qDebug() << "Checksummed Download for:" << rawName().serialize() << "storage:" << storage << "url:" << url << "expected sha1:" << sha1;
             out.append(dl);
         } else {
-            out.append(Net::ApiDownload::makeCached(url, entry, options));
+            out.append(Net::ApiDownload::makeCached(finalUrl, entry, options));
             qDebug() << "Download for:" << rawName().serialize() << "storage:" << storage << "url:" << url;
         }
         return true;
@@ -172,18 +181,18 @@ QList<Net::NetRequest::Ptr> Library::getDownloads(const RuntimeContext& runtimeC
                     if (nat32info) {
                         auto cooked_storage = raw_storage;
                         cooked_storage.replace("${arch}", "32");
-                        add_download(cooked_storage, nat32info->url, nat32info->sha1);
+                        add_download(cooked_storage, nat32info->url, nat32info->sha1, true);
                     }
                     auto nat64info = m_mojangDownloads->getDownloadInfo(nat64Classifier);
                     if (nat64info) {
                         auto cooked_storage = raw_storage;
                         cooked_storage.replace("${arch}", "64");
-                        add_download(cooked_storage, nat64info->url, nat64info->sha1);
+                        add_download(cooked_storage, nat64info->url, nat64info->sha1, true);
                     }
                 } else {
                     auto info = m_mojangDownloads->getDownloadInfo(nativeClassifier);
                     if (info) {
-                        add_download(raw_storage, info->url, info->sha1);
+                        add_download(raw_storage, info->url, info->sha1, true);
                     }
                 }
             } else {
@@ -192,7 +201,7 @@ QList<Net::NetRequest::Ptr> Library::getDownloads(const RuntimeContext& runtimeC
         } else {
             if (m_mojangDownloads->artifact) {
                 auto artifact = m_mojangDownloads->artifact;
-                add_download(raw_storage, artifact->url, artifact->sha1);
+                add_download(raw_storage, artifact->url, artifact->sha1, true);
             } else {
                 qDebug() << "Ignoring java library" << m_name.serialize() << "because it has no artifact";
             }
@@ -213,15 +222,16 @@ QList<Net::NetRequest::Ptr> Library::getDownloads(const RuntimeContext& runtimeC
                 return m_repositoryURL + QChar('/') + raw_storage;
             }
         }();
+        bool isMojangLibrary = m_repositoryURL.isEmpty() && m_absoluteURL.isEmpty();
         if (raw_storage.contains("${arch}")) {
             QString cooked_storage = raw_storage;
             QString cooked_dl = raw_dl;
-            add_download(cooked_storage.replace("${arch}", "32"), cooked_dl.replace("${arch}", "32"), QString());
+            add_download(cooked_storage.replace("${arch}", "32"), cooked_dl.replace("${arch}", "32"), QString(), isMojangLibrary);
             cooked_storage = raw_storage;
             cooked_dl = raw_dl;
-            add_download(cooked_storage.replace("${arch}", "64"), cooked_dl.replace("${arch}", "64"), QString());
+            add_download(cooked_storage.replace("${arch}", "64"), cooked_dl.replace("${arch}", "64"), QString(), isMojangLibrary);
         } else {
-            add_download(raw_storage, raw_dl, QString());
+            add_download(raw_storage, raw_dl, QString(), isMojangLibrary);
         }
     }
     return out;
