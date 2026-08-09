@@ -36,7 +36,7 @@ void AssetUpdateTask::executeTask()
     DownloadSourcePolicy::ResourceRequest req;
     req.kind = DownloadSourcePolicy::ResourceKind::MinecraftAssetIndex;
     req.originalUrl = indexUrl;
-    req.versionId = profile->getComponentVersion("net.minecraft");
+    req.versionId = components->getComponentVersion("net.minecraft");
     auto finalUrl = DownloadSourcePolicy::urlFor(req, DownloadSourcePolicy::currentMode(), DownloadSourcePolicy::currentCustomSources());
 
     auto dl = Net::ApiDownload::makeCached(finalUrl, entry);
