@@ -1,0 +1,14 @@
+ launcher/ResourceDownloadTask.cpp             |  11 [32m++[m[31m-[m
+ launcher/minecraft/AssetsUtils.cpp            |  12 [32m++[m[31m-[m
+ launcher/minecraft/Library.cpp                |   2 [32m+[m[31m-[m
+ launcher/minecraft/update/AssetUpdateTask.cpp |  10 [32m++[m[31m-[m
+ launcher/modplatform/flame/FlameAPI.cpp       |  27 [32m++++[m[31m--[m
+ launcher/modplatform/flame/FlameAPI.h         |  26 [32m+++++[m[31m-[m
+ launcher/modplatform/modrinth/ModrinthAPI.cpp |  21 [32m+++[m[31m--[m
+ launcher/modplatform/modrinth/ModrinthAPI.h   |  28 [32m++++[m[31m--[m
+ launcher/net/DownloadSourcePolicy.cpp         |  88 [32m++++++++++++[m[31m------[m
+ launcher/net/DownloadSourcePolicy.h           |   2 [32m+[m
+ launcher/ui/pages/global/APIPage.cpp          |  38 [32m++++++++[m
+ launcher/ui/pages/global/APIPage.h            |   1 [32m+[m
+ launcher/ui/pages/global/APIPage.ui           | 123 [32m++++++++++++++++++++++++++[m
+ 13 files changed, 333 insertions(+), 56 deletions(-)
