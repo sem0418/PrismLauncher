@@ -188,4 +188,7 @@ return urlFromBase(
 return request.originalUrl;
     }
 
+    return request.originalUrl;
+}
+
 } // namespace DownloadSourcePolicy
